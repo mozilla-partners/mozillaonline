@@ -12,12 +12,11 @@ import zipfile
 
 LEGACY_DISTROS = {
     "baidu": "firefox.baidusd",
-    "baizhu": "firefox.dw",
-    "cumulon": "firefox.newhua",
+    "esrOther": "esr.firefox.com.cn",
+    "esrWinFull": "esr.firefox.com.cn",
     "kingsoft": "firefox.kis",
     "mainOther": "firefox.com.cn",
     "mainWinFull": "full.firefox.com.cn",
-    "mainWinStub": "stub.firefox.com.cn",
     "mainWinStubFallback": "firefox.latest",
     "others": "firefox.others",
     "qihoo": "firefox.3gj",
