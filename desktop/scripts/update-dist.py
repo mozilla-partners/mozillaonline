@@ -19,6 +19,7 @@ LEGACY_DISTROS = {
     "mainWinFull": "full.firefox.com.cn",
     "mainWinStub": "stub.firefox.com.cn",
     "mainWinStubFallback": "firefox.latest",
+    "mydown": "firefox.yesky",
     "others": "firefox.others",
     "qihoo": "firefox.3gj",
     "tencent": "firefox.qm",
