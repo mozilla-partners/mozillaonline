@@ -1,0 +1,83 @@
+name: Create PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'Month to use in distribution version'
+        required: true
+      version:
+        description: 'Firefox version to target'
+        required: true
+      year:
+        description: 'Year to use in distribution version'
+        required: true
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ endsWith(github.event.inputs.version, 'esr') && 'esr' || 'master' }}
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install dependencies
+      run: |
+        cd desktop/scripts
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Fetch the latest extensions
+      run: |
+        cd desktop/scripts
+        python fetch-extensions.py
+      env:
+        TASKCLUSTER_ROOT_URL: https://firefox-ci-tc.services.mozilla.com
+        TASKCLUSTER_CLIENT_ID: ${{ secrets.TASKCLUSTER_CLIENT_ID }}
+        TASKCLUSTER_ACCESS_TOKEN: ${{ secrets.TASKCLUSTER_ACCESS_TOKEN }}
+
+    - name: Update distribution.ini for variants
+      run: |
+        cd desktop/scripts
+        python update-dist.py ini -y ${{ github.event.inputs.year }} -m ${{ github.event.inputs.month }}
+
+    - name: Update extensions for variants
+      run: |
+        cd desktop/scripts
+        python update-dist.py extension
+
+    - name: Commit the changes
+      run: |
+        git add desktop
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git checkout -b ${{ endsWith(github.event.inputs.version, 'esr') && 'esr' || 'release' }}-fx${{ github.event.inputs.version }}
+        git commit -m "Updates for Fx ${{ github.event.inputs.version }}"
+        git push origin ${{ endsWith(github.event.inputs.version, 'esr') && 'esr' || 'release' }}-fx${{ github.event.inputs.version }} -f
+
+    - name: Create PR
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.pulls.create({
+            owner: "${{ github.repository_owner }}",
+            repo: "mozillaonline",
+            title: "Updates for Fx ${{ github.event.inputs.version }}",
+            head: "${{ endsWith(github.event.inputs.version, 'esr') && 'esr' || 'release' }}-fx${{ github.event.inputs.version }}",
+            base: "${{ endsWith(github.event.inputs.version, 'esr') && 'esr' || 'master' }}",
+            maintainer_can_modify: false,
+          });
