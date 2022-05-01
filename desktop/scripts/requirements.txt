@@ -13,6 +13,6 @@ six==1.16.0
 slugid==2.0.0
 taskcluster==44.2.2
 taskcluster-urls==13.0.1
-typing-extensions==3.10.0.2
+typing-extensions==4.2.0
 urllib3==1.26.6
 yarl==1.6.3
