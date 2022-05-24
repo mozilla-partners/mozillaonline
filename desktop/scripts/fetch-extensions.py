@@ -4,6 +4,7 @@ import os
 import taskcluster
 
 from taskcluster import download
+from taskcluster.exceptions import TaskclusterRestFailure
 
 EXTENSIONS = ["cehomepage", "china-newtab", "cpmanager"]
 XPINSTALL = "application/x-xpinstall"
@@ -25,7 +26,12 @@ def xpi_artifact(queue, taskId):
     return xpi_artifacts[0].get("name")
 
 def task_for_index(index, indexPath):
-    return index.findTask(indexPath).get("taskId")
+    try:
+        return index.findTask(indexPath).get("taskId")
+    except TaskclusterRestFailure as tcrf:
+        if tcrf.status_code == 404:
+            return ""
+        raise tcrf
 
 def main():
     config = taskcluster.optionsFromEnvironment()
@@ -36,6 +42,10 @@ def main():
         indexPath = f"xpi.v2.xpi-manifest.{extension}.release-signing.latest"
         target_file = f"templates/extensions/{extension}.xpi"
         taskId = task_for_index(index, indexPath)
+        if not taskId:
+            print(f"No task found for index {indexPath}")
+            continue
+
         xpi_artifact_name = xpi_artifact(queue, taskId)
         download_artifact(
             name=xpi_artifact_name,
