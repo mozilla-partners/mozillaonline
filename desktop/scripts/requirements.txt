@@ -13,5 +13,5 @@ six==1.16.0
 slugid==2.0.0
 taskcluster==44.16.3
 taskcluster-urls==13.0.1
-urllib3==1.26.9
+urllib3==1.26.14
 yarl==1.7.2
